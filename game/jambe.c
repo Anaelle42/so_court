@@ -6,7 +6,7 @@
 /*   By: ahenault <ahenault@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 12:07:33 by ahenault          #+#    #+#             */
-/*   Updated: 2024/10/24 14:12:31 by ahenault         ###   ########.fr       */
+/*   Updated: 2024/10/24 16:12:50 by ahenault         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,9 @@ typedef struct s_vars
 	t_list	*witch;
 	void	*player[4];
 
-	// void	*wall;
+	void	*wall;
+	void	*wall2;
+
 	void	*floor;
 	void	*floor2;
 
@@ -61,9 +63,13 @@ int	move(t_vars *var, int x, int y)
 	// if (var->map[(var->playery + y) / 48][(var->playerx + x) / 48] == 'E'
 	// 	&& var->p_coins == var->nb_coins)
 	// 	end(var);
-	// if (var->map[(var->playery + y) / 48][(var->playerx + x) / 48] == '1'
-	// 	|| var->map[(var->playery + y) / 48][(var->playerx + x) / 48] == 'E')
-	// 	return (0);
+	//	|| var->map[(var->playery + y) / 48][(var->playerx + x) / 32] == 'E')
+	if ((var->map[(var->playery + y) / 48][(var->playerx + x) / 32] == '1')
+		|| (var->map[(var->playery + y) / 48][(var->playerx + x) / 32] == '2'))
+		return (0);
+	if (var->map[(var->playery + y) / 48][(var->playerx + x) / 32] == '3')
+		return (0);
+	var->map[var->playery / 48][var->playerx / 32] = '3';
 	mlx_put_image_to_window(var->mlx, var->win, var->floor2, var->playerx,
 		var->playery);
 	var->playerx += x;
@@ -93,8 +99,8 @@ int	game(int key, t_vars *var)
 	}
 	if (key == 65362 && (var->playery - 1) >= 0)
 	{
-		printf("haut %i\n", var->playery);
-		printf("haut %i\n", var->playery - 1);
+		printf("haut %i\n", var->playery / 48);
+		printf("haut %i\n", var->playery / 48 - 1);
 		printf("haut\n");
 		move(var, 0, -48);
 	}
@@ -116,7 +122,7 @@ int	image(t_vars *var)
 	static int	frame;
 
 	frame++;
-	if (frame == 100000)
+	if (frame == 10000) // 100000
 	{
 		frame = 0;
 		mlx_put_image_to_window(var->mlx, var->win, var->witch->content,
@@ -192,6 +198,8 @@ int	main(void)
 	var.player[3] = NULL;
 	var.floor = mlx_xpm_file_to_image(var.mlx, "xpm/sol.xpm", &w, &h);
 	var.floor2 = mlx_xpm_file_to_image(var.mlx, "xpm/sol2.xpm", &w, &h);
+	var.wall = mlx_xpm_file_to_image(var.mlx, "xpm/wall.xpm", &w, &h);
+	var.wall2 = mlx_xpm_file_to_image(var.mlx, "xpm/wall2.xpm", &w, &h);
 	var.witch = create_list(var);
 	//
 	var.map = calloc(nb_map + 1, sizeof(char *));
@@ -206,21 +214,25 @@ int	main(void)
 	while (var.map[i])
 	{
 		a = 0;
-		while (var.map[i][a])
+		while (var.map[i][a] && (var.map[i][a] != '\n'))
 		{
-			// if (var.map[i][a] == '1')
-			// 	mlx_put_image_to_window(var.mlx, var.win, var.wall, x, y);
 			// if (var.map[i][a] == '0')
 			// 	mlx_put_image_to_window(var.mlx, var.win, var.floor, i * w, a
 			// 		* h);
-			if (var.map[i][a] == 'P')
+			if (var.map[i][a] == '1')
+				mlx_put_image_to_window(var.mlx, var.win, var.wall, a * w, i
+					* h);
+			else if (var.map[i][a] == '2')
+				mlx_put_image_to_window(var.mlx, var.win, var.wall2, a * w, i
+					* h);
+			else if (var.map[i][a] == 'P')
 			{
-				var.playerx = i * w;
-				var.playery = a * h;
+				var.playerx = a * w;
+				var.playery = i * h;
 				// mlx_put_image_to_window(var.mlx, var.win, var.player, x, y);
 			}
 			else
-				mlx_put_image_to_window(var.mlx, var.win, var.floor, i * w, a
+				mlx_put_image_to_window(var.mlx, var.win, var.floor, a * w, i
 					* h);
 			// if (var.map[i][a] == 'C')
 			// {
