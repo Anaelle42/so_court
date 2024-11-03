@@ -6,7 +6,7 @@
 /*   By: ahenault <ahenault@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 12:07:33 by ahenault          #+#    #+#             */
-/*   Updated: 2024/10/24 16:12:50 by ahenault         ###   ########.fr       */
+/*   Updated: 2024/10/24 17:18:14 by ahenault         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,10 @@ typedef struct s_vars
 	void	*mlx;
 	void	*win;
 	t_list	*witch;
-	void	*player[4];
+	t_list	*feu;
+
+	void	*player[6];
+	void	*fire[6];
 
 	void	*wall;
 	void	*wall2;
@@ -34,6 +37,8 @@ typedef struct s_vars
 	char	**map;
 	// int		nb_coins;
 	// int		p_coins;
+	int		frame;
+
 }			t_vars;
 
 // int	end(t_vars *var)
@@ -64,13 +69,13 @@ int	move(t_vars *var, int x, int y)
 	// 	&& var->p_coins == var->nb_coins)
 	// 	end(var);
 	//	|| var->map[(var->playery + y) / 48][(var->playerx + x) / 32] == 'E')
-	if ((var->map[(var->playery + y) / 48][(var->playerx + x) / 32] == '1')
-		|| (var->map[(var->playery + y) / 48][(var->playerx + x) / 32] == '2'))
-		return (0);
-	if (var->map[(var->playery + y) / 48][(var->playerx + x) / 32] == '3')
-		return (0);
-	var->map[var->playery / 48][var->playerx / 32] = '3';
-	mlx_put_image_to_window(var->mlx, var->win, var->floor2, var->playerx,
+	// if ((var->map[(var->playery + y) / 48][(var->playerx + x) / 32] == '1')
+	// 	|| (var->map[(var->playery + y) / 48][(var->playerx + x) / 32] == '2'))
+	// 	return (0);
+	// if (var->map[(var->playery + y) / 48][(var->playerx + x) / 32] == '3')
+	// 	return (0);
+	// var->map[var->playery / 48][var->playerx / 32] = '3';
+	mlx_put_image_to_window(var->mlx, var->win, var->floor, var->playerx,
 		var->playery);
 	var->playerx += x;
 	var->playery += y;
@@ -95,44 +100,42 @@ int	game(int key, t_vars *var)
 	if (key == 65361 && (var->playerx - 1) >= 0)
 	{
 		printf("gauche\n");
-		move(var, -32, 0);
+		move(var, -60, 0);
 	}
 	if (key == 65362 && (var->playery - 1) >= 0)
 	{
 		printf("haut %i\n", var->playery / 48);
 		printf("haut %i\n", var->playery / 48 - 1);
 		printf("haut\n");
-		move(var, 0, -48);
+		move(var, 0, -60);
 	}
 	if (key == 65363)
 	{
 		printf("droite\n");
-		move(var, 32, 0);
+		move(var, 60, 0);
 	}
 	if (key == 65364)
 	{
 		printf("bas\n");
-		move(var, 0, 48);
+		move(var, 0, 60);
 	}
 	return (0);
 }
 
 int	image(t_vars *var)
 {
-	static int	frame;
-
-	frame++;
-	if (frame == 10000) // 100000
+	if (var->frame == 3000) // 100000
 	{
-		frame = 0;
+		var->frame = 0;
 		mlx_put_image_to_window(var->mlx, var->win, var->witch->content,
 			var->playerx, var->playery);
 		var->witch = var->witch->next;
 	}
+	var->frame++;
 	return (0);
 }
 
-t_list	*create_list(t_vars var)
+t_list	*create_list(void **tab)
 {
 	t_list	*list;
 	t_list	*tmp;
@@ -141,14 +144,14 @@ t_list	*create_list(t_vars var)
 	list = NULL;
 	tmp = NULL;
 	i = 0;
-	ft_lstadd_back(&list, ft_lstnew((void *)var.player[i]));
+	ft_lstadd_back(&list, ft_lstnew((void *)tab[i]));
 	i++;
 	tmp = list;
 	while (42)
 	{
-		ft_lstadd_back(&list, ft_lstnew((void *)var.player[i]));
+		ft_lstadd_back(&list, ft_lstnew((void *)tab[i]));
 		i++;
-		if (var.player[i])
+		if (tab[i])
 			list = list->next;
 		else
 			break ;
@@ -169,17 +172,13 @@ int	main(void)
 	int		i;
 	int		a;
 
-	// int		x;
-	// int		y;
 	nb_map = 9;
 	w = 0;
 	h = 0;
-	// x = 0;
-	// y = 0;
+	var.frame = 3000;
 	// var.nb_coins = 0;
 	// var.p_coins = 0;
 	i = 0;
-	// a = 0;
 	var.mlx = mlx_init();
 	if (!var.mlx)
 		return (1);
@@ -192,15 +191,29 @@ int	main(void)
 	if (fd == -1)
 		return (1);
 	//
-	var.player[0] = mlx_xpm_file_to_image(var.mlx, "xpm/a.xpm", &w, &h);
-	var.player[1] = mlx_xpm_file_to_image(var.mlx, "xpm/b.xpm", &w, &h);
-	var.player[2] = mlx_xpm_file_to_image(var.mlx, "xpm/a.xpm", &w, &h);
-	var.player[3] = NULL;
-	var.floor = mlx_xpm_file_to_image(var.mlx, "xpm/sol.xpm", &w, &h);
-	var.floor2 = mlx_xpm_file_to_image(var.mlx, "xpm/sol2.xpm", &w, &h);
-	var.wall = mlx_xpm_file_to_image(var.mlx, "xpm/wall.xpm", &w, &h);
-	var.wall2 = mlx_xpm_file_to_image(var.mlx, "xpm/wall2.xpm", &w, &h);
-	var.witch = create_list(var);
+	var.player[0] = mlx_xpm_file_to_image(var.mlx, "xpm_60/witch1.xpm", &w, &h);
+	var.player[1] = mlx_xpm_file_to_image(var.mlx, "xpm_60/witch2.xpm", &w, &h);
+	var.player[2] = mlx_xpm_file_to_image(var.mlx, "xpm_60/witch3.xpm", &w, &h);
+	var.player[3] = mlx_xpm_file_to_image(var.mlx, "xpm_60/witch4.xpm", &w, &h);
+	var.player[4] = mlx_xpm_file_to_image(var.mlx, "xpm_60/witch5.xpm", &w, &h);
+	var.player[5] = NULL;
+	//
+	var.fire[0] = mlx_xpm_file_to_image(var.mlx, "xpm_60/fire/f1.xpm", &w, &h);
+	var.fire[1] = mlx_xpm_file_to_image(var.mlx, "xpm_60/fire/f2.xpm", &w, &h);
+	var.fire[2] = mlx_xpm_file_to_image(var.mlx, "xpm_60/fire/f3.xpm", &w, &h);
+	var.fire[3] = mlx_xpm_file_to_image(var.mlx, "xpm_60/fire/f4.xpm", &w, &h);
+	var.fire[4] = mlx_xpm_file_to_image(var.mlx, "xpm_60/fire/f5.xpm", &w, &h);
+	var.fire[5] = NULL;
+	//
+	var.floor = mlx_xpm_file_to_image(var.mlx, "xpm_60/noir.xpm", &w, &h);
+	var.witch = create_list(var.player);
+	var.feu = create_list(var.fire);
+	//
+	while (var.feu)
+	{
+		mlx_put_image_to_window(var.mlx, var.win, var.feu->content, 0, 0);
+		var.feu = var.feu->next;
+	}
 	//
 	var.map = calloc(nb_map + 1, sizeof(char *));
 	if (!var.map)
@@ -216,31 +229,37 @@ int	main(void)
 		a = 0;
 		while (var.map[i][a] && (var.map[i][a] != '\n'))
 		{
-			// if (var.map[i][a] == '0')
-			// 	mlx_put_image_to_window(var.mlx, var.win, var.floor, i * w, a
+			// if (var.map[i][a] == '1')
+			// 	mlx_put_image_to_window(var.mlx, var.win, var.wall, a * w, i
 			// 		* h);
-			if (var.map[i][a] == '1')
-				mlx_put_image_to_window(var.mlx, var.win, var.wall, a * w, i
-					* h);
-			else if (var.map[i][a] == '2')
-				mlx_put_image_to_window(var.mlx, var.win, var.wall2, a * w, i
-					* h);
-			else if (var.map[i][a] == 'P')
+			// else if (var.map[i][a] == '2')
+			// 	mlx_put_image_to_window(var.mlx, var.win, var.wall2, a
+			//					* w,			i
+			// 		* h);
+			if (var.map[i][a] == 'P')
 			{
 				var.playerx = a * w;
 				var.playery = i * h;
-				// mlx_put_image_to_window(var.mlx, var.win, var.player, x, y);
+				// mlx_put_image_to_window(var.mlx, var.win, var.player, x,
+				//			y);
 			}
-			else
-				mlx_put_image_to_window(var.mlx, var.win, var.floor, a * w, i
-					* h);
+			// else
+			// 	mlx_put_image_to_window(var.mlx, var.win, var.floor, a
+			//					* w,			i
+			// 		* h);
+			// if (var.map[i][a] == '0')
+			// 	mlx_put_image_to_window(var.mlx, var.win, var.floor, i
+			//						* w,				a
+			// 		* h);
 			// if (var.map[i][a] == 'C')
 			// {
-			// 	mlx_put_image_to_window(var.mlx, var.win, var.coin, x, y);
+			// 	mlx_put_image_to_window(var.mlx, var.win, var.coin, x,
+			//		y);
 			// 	var.nb_coins++;
 			// }
 			// if (var.map[i][a] == 'E')
-			// 	mlx_put_image_to_window(var.mlx, var.win, var.exit, x, y);
+			// 	mlx_put_image_to_window(var.mlx, var.win, var.exit, x,
+			//			y);
 			// x += 48;
 			a++;
 		}
